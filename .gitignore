@@ -1,0 +1,23 @@
+# IDE Directories Files
+*.idea
+*.iml
+
+# BOB Directories Files
+*bob-build-root*
+*.bob
+
+# Helm Packages
+*.tgz
+*.tar.gz
+
+# Helm dependency files
+Chart.lock
+charts/
+
+# Build files
+*target/
+*__pycache__/
+*test-output/
+
+# Logs
+*.log

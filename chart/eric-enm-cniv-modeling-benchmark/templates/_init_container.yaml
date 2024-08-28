@@ -1,0 +1,23 @@
+{{- define "eric-enm-cniv-modeling-benchmark.job.init-container.tpl" }}
+{{- $ := index . 0 }}
+{{- with index . 1 }}
+{{- $cnivagent := include "eric-enm-cniv-modeling-benchmark.cnivagent" $ }}
+{{- if eq $cnivagent "true" -}}
+initContainers:
+- name: init-service
+  image: {{ template "eric-enm-cniv-modeling-benchmark.initbenchImagePath" $ }}
+  args: [ '{{ template "eric-enm-cniv-modeling-benchmark.agentAddress" $ }}', '{{ template "eric-enm-cniv-modeling-benchmark.benchmarkGroup.label" $ }}', '{{ template "eric-enm-cniv-modeling-benchmark.name" $ }}-{{ .name }}']
+  imagePullPolicy: {{ $.Values.imageCredentials.pullPolicy }}
+  resources:
+    {{- toYaml $.Values.resources | nindent 10 }}
+  securityContext:
+    allowPrivilegeEscalation: false
+    privileged: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,17 @@
+global:
+  registry:
+    url: armdocker.rnd.ericsson.se
+    pullSecret: cniv-modeling-bm-secret
+  persistentVolumeClaim:
+    storageClass:
+      file: hostpath
+
+imageCredentials:
+  providerBench:
+    repoPath: proj-lt-test
+
+images:
+  initBench:
+    tag: latest
+  providerBench:
+    tag: local

@@ -1,0 +1,10 @@
+modelVersion: 2.0
+
+properties:
+  - helm-chart-name: eric-enm-cniv-modeling-benchmark
+  - product-contact: pdltorserv@pdl.internal.ericsson.com
+  - namespace: eric-enm-cniv-modeling-benchmark
+  - cluster-id: hall935
+  - storage-class-name: network-file
+  - helm-install: true
+  - helm-install-pause: 3

@@ -1,0 +1,19 @@
+# Exclude everything
+**
+
+# Then allow files and directories for context
+!Dockerfile
+
+# Necessary for maven build
+!pom.xml
+!modeling-benchmark-jar/src
+!modeling-benchmark-jar/pom.xml
+!checkstyle-suppressions.xml
+!modeling-benchmark-jar/target/modeling-benchmark.jar
+!modeling-benchmark-jar/target/dependency-jars
+!testsuite/src
+!testsuite/pom.xml
+
+# Necessary for production build
+!image-content
+**/__pycache__

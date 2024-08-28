@@ -1,0 +1,61 @@
+##########################################################################
+# Default values for eric-enm-cniv-modeling-benchmark
+##########################################################################
+registry:
+    url: REPO_URL
+
+images:
+    initBench:
+        name: eric-cniv-init-bench
+        tag: 1.0.66-31
+    providerBench:
+        name: eric-enm-cniv-modeling-benchmark
+        tag: VERSION
+
+imageCredentials:
+    initBench:
+        repoPath: proj-eric-oss-cniv/proj-eric-oss-cniv-drop
+    providerBench:
+        repoPath: REPO_PATH
+    registry:
+        imagePullPolicy: IfNotPresent
+        pullSecret:
+
+resources:
+    limits:
+        cpu: 500m
+        memory: 2Gi
+    requests:
+        cpu: 500m
+        memory: 2Gi
+
+persistentVolumeClaim:
+    accessMode: ReadWriteMany
+    storageClassName: standard
+
+jobs:
+  - name: write
+    enabled: true
+    storageRequirement: 1536
+    requirements:
+        description: Minimum write throughput in KiB/s.
+        expectedResult: 2380
+    config:
+        nrFiles: 50000
+        fileSize: 20
+        type: write
+
+logLevel: INFO
+
+cnivAgent:
+    enabled: false
+    name: eric-oss-cniv
+    port: 8080
+
+description: Verifies the write throughput of the filesystem
+
+labels: {}
+
+terminationGracePeriodSeconds: 30
+
+tolerations: []

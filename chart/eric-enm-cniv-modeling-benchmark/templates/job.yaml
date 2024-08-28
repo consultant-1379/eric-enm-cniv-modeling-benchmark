@@ -1,0 +1,72 @@
+{{- range .Values.jobs }}
+{{- if .enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "eric-enm-cniv-modeling-benchmark.name" $ }}-{{ .name }}
+  labels:
+    {{- include "eric-enm-cniv-modeling-benchmark.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "eric-enm-cniv-modeling-benchmark.annotations" $ | nindent 4 }}
+spec:
+  completionMode: Indexed
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        {{- include "eric-enm-cniv-modeling-benchmark.labels" $ | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      {{- include "eric-enm-cniv-modeling-benchmark.job.init-container.tpl" (list $ .) | nindent 6 }}
+      containers:
+        - name: {{ template "eric-enm-cniv-modeling-benchmark.name" $ }}-{{ .name }}
+          image: {{ template "eric-enm-cniv-modeling-benchmark.providerImagePath" $ }}
+          env:
+          - name: LOG_LEVEL
+            value: {{ $.Values.logLevel }}
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          args: [
+            '{{ $.Values.description }}',
+            '{{ template "eric-enm-cniv-modeling-benchmark.benchmarkGroup.label" $ }}',
+            '{{ template "eric-enm-cniv-modeling-benchmark.name" $ }}-{{ .name }}-$(JOB_COMPLETION_INDEX)',
+            '$(NODE_NAME)',
+            '{{- include "eric-enm-cniv-modeling-benchmark.cnivagent" $ }}',
+            '{{ template "eric-enm-cniv-modeling-benchmark.agentAddress" $ }}'
+          ]
+          imagePullPolicy: {{ template "eric-enm-cniv-modeling-benchmark.imagePullPolicy" $ }}
+          resources:
+            {{- toYaml $.Values.resources | nindent 12 }}
+          volumeMounts:
+          - mountPath: /etc/opt/ericsson/ERICmodeldeployment
+            name: pvs
+          - mountPath: /config
+            name: config
+          - mountPath: /output
+            name: output
+          securityContext:
+            runAsNonRoot: true
+            privileged: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "eric-enm-cniv-modeling-benchmark.name" $ }}-{{ .name }}
+      - name: pvs
+        persistentVolumeClaim:
+          claimName: {{ template "eric-enm-cniv-modeling-benchmark.name" $ }}-{{ .name }}
+      - name: output
+        emptyDir: {}
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: {{ template "eric-enm-cniv-modeling-benchmark.pullSecret" $ }}
+      securityContext:
+        fsGroup: {{ template "eric-enm-cniv-modeling-benchmark.fsGroup.coordinated" $ }}
+{{- end }}
+{{- end }}

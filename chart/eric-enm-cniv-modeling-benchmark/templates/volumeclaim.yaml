@@ -1,0 +1,22 @@
+{{- $accessMode := .Values.persistentVolumeClaim.accessMode }}
+
+{{- range .Values.jobs }}
+{{- if .enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ template "eric-enm-cniv-modeling-benchmark.name" $ }}-{{ .name }}
+  labels:
+    {{- include "eric-enm-cniv-modeling-benchmark.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "eric-enm-cniv-modeling-benchmark.annotations" $ | nindent 4 }}
+spec:
+  accessModes:
+  - {{ $accessMode }}
+  resources:
+    requests:
+      storage: {{ .storageRequirement }}Mi
+  storageClassName: {{ template "eric-enm-cniv-modeling-benchmark.storageClass" $ }}
+{{- end }}
+{{- end }}

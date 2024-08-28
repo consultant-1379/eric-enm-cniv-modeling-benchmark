@@ -1,0 +1,10 @@
+productName: "eric-enm-cniv-modeling-benchmark"
+productNumber: "CXD 101 1001"
+images:
+  mainImage:
+    productName: "eric-enm-cniv-modeling-benchmark image"
+    productNumber: "CXU XXX XXXX"
+    registry: "armdocker.rnd.ericsson.se"
+    repoPath: "REPO_PATH"
+    name: "eric-enm-cniv-modeling-benchmark"
+    tag: "VERSION"

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.ericsson.oss.containerisation</groupId>
+    <artifactId>eric-enm-cniv-modeling-benchmark</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>[${project.artifactId}] project</name>
+    <description>This project contains the functional logic used to test that the performance of the storage
+        infrastructure is sufficient for the modeling usecases.
+    </description>
+
+    <modules>
+        <module>modeling-benchmark-jar</module>
+        <module>testsuite</module>
+    </modules>
+
+    <properties>
+        <version.log4j>2.20.0</version.log4j>
+        <version.jackson>2.15.2</version.jackson>
+        <version.commonsio>2.14.0</version.commonsio>
+        <version.commons-lang>3.13.0</version.commons-lang>
+
+        <version.junit>5.8.2</version.junit>
+        <version.mockito-junit-jupiter>4.8.1</version.mockito-junit-jupiter>
+        <version.mockito-inline>4.8.1</version.mockito-inline>
+
+        <version.jdk>1.8</version.jdk>
+        <version.compiler>3.11.0</version.compiler>
+        <version.checkstyle>6.19</version.checkstyle>
+        <version.checkstyle.module>1.1.351</version.checkstyle.module>
+        <version.checkstyle.plugin>2.17</version.checkstyle.plugin>
+        <version.surefire>3.1.0</version.surefire>
+        <version.jar-plugin>3.3.0</version.jar-plugin>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j-impl</artifactId>
+                <version>${version.log4j}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${version.commons-lang}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-yaml</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${version.commonsio}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
+                <version>${version.mockito-junit-jupiter}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-inline</artifactId>
+                <version>${version.mockito-inline}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>${version.junit}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${version.compiler}</version>
+                <configuration>
+                    <source>${version.jdk}</source>
+                    <target>${version.jdk}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${version.checkstyle.plugin}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${version.checkstyle}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.ericsson.cds</groupId>
+                        <artifactId>checkstyle-module</artifactId>
+                        <version>${version.checkstyle.module}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <configLocation>enm/checkstyle/checkstyle.xml</configLocation>
+                    <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
+                    <violationSeverity>warning</violationSeverity>
+                    <failsOnError>true</failsOnError>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-style</id>
+                        <goals>
+                            <goal>checkstyle</goal>
+                        </goals>
+                        <phase>validate</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

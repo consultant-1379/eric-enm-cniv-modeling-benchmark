@@ -1,0 +1,22 @@
+{{- range .Values.jobs }}
+{{- if .enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "eric-enm-cniv-modeling-benchmark.name" $ }}-{{ .name }}
+  labels:
+    {{- include "eric-enm-cniv-modeling-benchmark.labels" $ | nindent 4 }}
+  annotations:
+    {{- include "eric-enm-cniv-modeling-benchmark.annotations" $ | nindent 4 }}
+data:
+  benchmark.properties: |
+    #Benchmark Config for {{ .name }}
+    directory=/etc/opt/ericsson/ERICmodeldeployment
+    {{- range $key, $value := .config }}
+    {{ $key }}={{ $value }}
+    {{- end }}
+  requirements.yaml: |
+    requirements: {{ .requirements | toYaml | nindent 6 }}
+{{- end }}
+{{- end }}

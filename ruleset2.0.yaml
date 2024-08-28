@@ -1,0 +1,144 @@
+# ********************************************************************
+# (c) Ericsson LMI 2023 - All rights reserved.
+#
+# The copyright to the computer program(s) herein is the property of
+# Ericsson LMI. The programs may be used and/or copied only  with the
+# written permission from Ericsson LMI or in accordance with the terms
+# and conditions stipulated in the agreement/contract under which the
+# program(s) have been supplied.
+#
+# ********************************************************************
+# Name    : ruleset2.0.yaml
+# Purpose : The purpose of this file is to provide tasks that can be run
+#           by the Bob execution engine, version 2.0.
+#           For more information, see:
+#           https://gerrit-gamma.gic.ericsson.se/plugins/gitiles/adp-cicd/bob/+/HEAD/USER_GUIDE_2.0.md
+# Usage   : "bob <rule-name>"
+#            - carries out the commands described under the rule
+# ********************************************************************
+modelVersion: 2.0
+
+description: "CNIV: Modeling Benchmark Local Pipeline.
+              PCR and Release pipelines are centrally controlled by:
+                - https://fem35s11-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/job/eric-enm-cniv-modeling-benchmark_PreCodeReview/configure
+                - https://fem35s11-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/job/eric-enm-cniv-modeling-benchmark_Drop/configure
+                - https://gerrit-gamma.gic.ericsson.se/gitweb?p=OSS/ENM-Parent/SQ-Gate/com.ericsson.oss.containerisation/cniv-ci-pipeline.git"
+
+docker:
+  registry: https://armdocker.rnd.ericsson.se/proj-eric-oss-cniv/proj-eric-oss-cniv-drop
+
+
+docker-images:
+  - mvn-builder: armdocker.rnd.ericsson.se/dockerhub-ericsson-remote/maven:${mvn-builder-version}
+  - python3-builder: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/bob-python3builder:2.7.0
+  - adp-helm-dr-check: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/adp-helm-dr-checker:${dr-checker-version}
+  - hadolint-scan: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/hadolint-scan:${hadolint-version}
+  - adp-release-auto: armdocker.rnd.ericsson.se/sandbox/adp-staging/adp-cicd/bob-adp-release-auto:latest
+  - adp-doc-builder: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/bob-docbuilder:latest
+  - adp-image-dr-check: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/adp-image-dr-check:latest
+
+
+properties:
+  - image-registry: armdocker.rnd.ericsson.se
+  - project-name: eric-enm-cniv-modeling-benchmark
+  - lt-test-repo: ${image-registry}/proj-lt-test
+  - mvn-builder-version: 3.6.3-jdk-8
+  - dr-checker-version: 48.7.0
+  - hadolint-version: 0.2.0-13
+  - build-dir: target/bob
+  - test-output-dir: test-output #This is a residual folder from the image-dr-check rule
+
+env:
+  - ENABLE_HELM_V3 (default=true)
+  - USERNAME
+
+rules:
+  local-run:
+    - rule: clean
+    - rule: lint-python
+    - rule: lint-helm
+    - rule: lint-markdown
+    - rule: build-local-image
+    - rule: image-dr-check
+
+  clean:
+    - task: clean
+      docker-image: mvn-builder
+      docker-flags:
+        - "-v /host_mnt/c/Users/${env.USERNAME}/.m2/:/root/.m2"
+      cmd:
+        - rm -rf .bob/
+        - rm -rf ${build-dir}/
+        - rm -rf ${test-output-dir}/
+        - mvn clean
+
+  mvn:
+    - task: mvn
+      docker-image: mvn-builder
+      docker-flags:
+        - "-v /host_mnt/c/Users/${env.USERNAME}/.m2/:/root/.m2"
+      cmd:
+        - mvn clean install
+
+  mvn-docker:
+    - task: mvn-build
+      description: "Builds the modeling benchmark project using the docker maven image, same as PCR"
+      cmd:
+        - docker image build . --target MAVEN_BUILD -t modeling-benchmark-builder
+
+  lint-python:
+    - task: prepare output dir
+      cmd: mkdir -p ${build-dir}
+
+    - task: lint-python
+      docker-image: python3-builder
+      docker-flags:
+        - "--env PYTHONPATH=image-content/src/main/python"
+      cmd: pylint image-content/ --fail-under 9 | tee -a ${build-dir}/scriptinglint.log
+
+  lint-helm:
+    - task: lint
+      docker-image: adp-release-auto
+      docker-flags:
+        - "--env ENABLE_HELM_V3=${env.ENABLE_HELM_V3}"
+      cmd:
+        - helm lint chart/${project-name}
+
+    - task: dr-check
+      docker-image: adp-helm-dr-check
+      # DR-D1123-125 is disabled as the write benchmark will need to write to the local filesystem
+      cmd:
+        - helm-dr-check -DhelmDesignRule.config.eric-enm-cniv-modeling-benchmark.DR-D1123-125=disable
+          --output ${build-dir}/ -helm-chart chart/${project-name} -c
+
+  lint-markdown:
+    - task: markdownlint
+      docker-image: adp-doc-builder
+      cmd: bash -c 'markdownlint --config /etc/markdownlint-cli/adp.yaml $(git ls-files -- \*\.md | cat | xargs)' || true
+
+
+  image-dr-check:
+    # DR-D470203-041-A & DR-D470203-050-A are disabled as the version is only generated during PCR / Drop
+    - task: check-image-dr
+      docker-image: adp-image-dr-check
+      docker-in-docker: socket
+      cmd: "image-dr-check
+             --image ${lt-test-repo}/${project-name}:local
+             --output .bob/check-image/
+             -DimageDesignRule.config.DR-D470203-041-A=disable -DimageDesignRule.config.DR-D470203-050-A=disable"
+
+  build-local-image:
+    - task: build-image
+      cmd:
+        - docker image build . --tag ${lt-test-repo}/${project-name}:local
+
+  push-local-image:
+    - rule: build-local-image
+
+    - task: re-tag image
+      cmd: docker image tag ${lt-test-repo}/${project-name}:local ${lt-test-repo}/${project-name}:local-${env.USERNAME}
+
+    - task: push-internal-image
+      description: "Pushes the benchmark image to an internal LT test repo"
+      cmd:
+        - docker image push ${lt-test-repo}/${project-name}:local-${env.USERNAME}
